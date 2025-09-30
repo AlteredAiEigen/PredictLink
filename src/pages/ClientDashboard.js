@@ -238,11 +238,11 @@ const ClientDashboard = () => {
           </Link>
           <div className="header-content">
             <h1>Singh Union Enterprises</h1>
-            <p>AI-Powered Supply Chain Management Dashboard</p>
+            <p>PredictLink - AI-Powered Supply Chain Management Dashboard</p>
           </div>
           <div className="ai-badge">
             <Brain size={16} />
-            AI-Powered
+            PredictLink AI
           </div>
         </div>
 

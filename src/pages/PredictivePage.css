@@ -131,7 +131,7 @@
 .header {
   background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #3b82f6 100%);
   color: white;
-  padding: 60px 30px 40px 30px;
+  padding: 80px 30px 40px 30px;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -175,13 +175,13 @@
 
 .back-button {
   position: absolute;
-  top: 20px;
-  left: 20px;
-  background: rgba(255, 255, 255, 0.3);
+  top: 15px;
+  left: 15px;
+  background: rgba(255, 255, 255, 0.2);
   color: white;
   border: none;
-  padding: 12px 24px;
-  border-radius: 30px;
+  padding: 10px 20px;
+  border-radius: 25px;
   cursor: pointer;
   transition: all 0.3s ease;
   backdrop-filter: blur(20px);
@@ -189,10 +189,11 @@
   text-decoration: none;
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-weight: 700;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .back-button:hover {

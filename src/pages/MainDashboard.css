@@ -10,6 +10,7 @@
   background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
   min-height: 100vh;
   padding: 20px;
+  padding-bottom: 120px;
   position: relative;
   overflow-x: hidden;
   cursor: none;
@@ -41,15 +42,33 @@
 
 .cursor-trail {
   position: fixed;
-  width: 16px;
-  height: 16px;
-  background: rgba(102, 126, 234, 0.6);
+  width: 12px;
+  height: 12px;
+  background: radial-gradient(circle, rgba(102, 126, 234, 0.8) 0%, rgba(102, 126, 234, 0.4) 50%, transparent 100%);
   border-radius: 50%;
   pointer-events: none;
   z-index: 9998;
-  animation: trailFade 2s ease-out forwards;
-  box-shadow: 0 0 12px rgba(102, 126, 234, 0.5);
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 8px rgba(102, 126, 234, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  transform-origin: center;
+}
+
+.stats-control-toggle {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid #667eea;
+  border-radius: 25px;
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #667eea;
+  cursor: pointer;
+  z-index: 10000;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
 }
 
 .trail-toggle {
@@ -70,26 +89,187 @@
   backdrop-filter: blur(10px);
 }
 
-.trail-toggle:hover {
+.trail-toggle:hover,
+.stats-control-toggle:hover {
   background: #667eea;
   color: white;
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
-.trail-toggle.active {
+.trail-toggle.active,
+.stats-control-toggle.active {
   background: #667eea;
   color: white;
 }
 
+/* Stats Control Panel */
+.stats-control-panel {
+  position: fixed;
+  top: 80px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid #667eea;
+  border-radius: 16px;
+  padding: 20px;
+  width: 350px;
+  max-height: 70vh;
+  overflow-y: auto;
+  z-index: 10001;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(15px);
+  animation: slideInLeft 0.3s ease-out;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.stats-control-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #ecf0f1;
+}
+
+.stats-control-header h3 {
+  color: #2c3e50;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.close-stats-control {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #aaa;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.close-stats-control:hover {
+  background: #e74c3c;
+  color: white;
+}
+
+.stats-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.stats-category h4 {
+  color: #2c3e50;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.stats-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stats-checkboxes label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: #2c3e50;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.stats-checkboxes label:hover {
+  background-color: #f8f9fa;
+}
+
+.stats-checkboxes input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #667eea;
+  cursor: pointer;
+}
+
+.stats-control-actions {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 2px solid #ecf0f1;
+  text-align: center;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.reset-stats-btn,
+.clear-storage-btn {
+  border: none;
+  padding: 10px 20px;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+  max-width: 120px;
+}
+
+.reset-stats-btn {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+.reset-stats-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(231, 76, 60, 0.4);
+}
+
+.clear-storage-btn {
+  background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(149, 165, 166, 0.3);
+}
+
+.clear-storage-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(149, 165, 166, 0.4);
+}
+
 @keyframes trailFade {
   0% {
-    opacity: 0.8;
-    transform: scale(1);
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(0.8);
   }
   100% {
     opacity: 0;
-    transform: scale(0.2);
+    transform: translate(-50%, -50%) scale(0.3);
   }
 }
 
@@ -106,14 +286,14 @@
 }
 
 .container {
-  max-width: 1000px;
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   background: rgba(255, 255, 255, 0.95);
-  border-radius: 20px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  border-radius: 0;
+  box-shadow: none;
   overflow: hidden;
   backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: none;
   animation: slideUp 0.6s ease-out;
 }
 
@@ -176,9 +356,11 @@
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 25px;
   padding: 30px;
+  min-height: calc(100vh - 300px);
+  margin-bottom: 20px;
 }
 
 .stat-card {
@@ -212,6 +394,31 @@
 
 .stat-card:hover::before {
   opacity: 1;
+}
+
+.stat-card:hover .stat-value {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #2c3e50;
+  text-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+  transform: scale(1.15);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  letter-spacing: 0.5px;
+}
+
+.stat-card:hover .stat-description {
+  font-weight: 700;
+  color: #2c3e50;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover .stat-list li {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+  padding: 14px 8px;
+  margin: 2px 0;
+  transition: all 0.3s ease;
 }
 
 .stat-card.supply-inefficiencies {
@@ -251,6 +458,12 @@
   position: relative;
   height: 220px;
   margin: 16px 0;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover .chart-container {
+  transform: scale(1.05);
+  filter: brightness(1.1);
 }
 
 .big-number {
@@ -294,6 +507,7 @@
   font-weight: bold;
   color: #2c3e50;
   font-size: 1.1rem;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .stat-description {
@@ -301,6 +515,7 @@
   font-size: 0.9rem;
   flex: 1;
   margin-right: 15px;
+  transition: all 0.3s ease;
 }
 
 .impact-badge {
@@ -331,6 +546,7 @@
   background: #f8f9fa;
   padding: 30px;
   margin: 0;
+  margin-bottom: 100px;
 }
 
 .summary-section h2 {
@@ -385,6 +601,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  max-width: 150px;
 }
 
 .sources-button:hover {
@@ -411,6 +628,7 @@
   align-items: center;
   gap: 10px;
   text-decoration: none;
+  max-width: 180px;
 }
 
 .how-it-works-button:hover {

@@ -15,7 +15,94 @@ const MainDashboard = () => {
   const [showCursor, setShowCursor] = useState(false);
   const [trailElements, setTrailElements] = useState([]);
   const [trailEnabled, setTrailEnabled] = useState(false);
+  const [showStatsControl, setShowStatsControl] = useState(false);
+  const trailRef = useRef([]);
+  const animationFrameRef = useRef(null);
   const lastTrailTime = useRef(0);
+  
+  // Default stats configuration
+  const defaultStatsConfig = {
+    supply: {
+      globalLosses: true,
+      foodWaste: true,
+      produceWaste: true,
+      emergencyCosts: true,
+      inventoryAccuracy: true
+    },
+    cashFlow: {
+      cashReserves: true,
+      operatingCosts: true,
+      gutBasedOrdering: true,
+      latePayments: true,
+      surplusInventory: true
+    },
+    competitive: {
+      stockoutReduction: true,
+      reactivePlanning: true,
+      negativePerception: true,
+      badDebt: true
+    },
+    keyImpact: {
+      globalLosses: true,
+      cashReserves: true,
+      reactivePlanning: true,
+      foodWaste: true
+    }
+  };
+
+  // Load stats from localStorage or use default
+  const loadStatsFromStorage = () => {
+    try {
+      const savedStats = localStorage.getItem('dashboardStatsConfig');
+      if (savedStats) {
+        return JSON.parse(savedStats);
+      }
+    } catch (error) {
+      console.warn('Failed to load stats from localStorage:', error);
+    }
+    return defaultStatsConfig;
+  };
+
+  // Stats control state
+  const [visibleStats, setVisibleStats] = useState(loadStatsFromStorage);
+
+  useEffect(() => {
+    // Load stats from localStorage on component mount
+    const savedStats = loadStatsFromStorage();
+    setVisibleStats(savedStats);
+  }, []);
+
+  // Trail animation loop
+  useEffect(() => {
+    if (trailEnabled) {
+      const animateTrails = () => {
+        const now = Date.now();
+        trailRef.current = trailRef.current.filter(trail => {
+          const age = now - trail.timestamp;
+          trail.opacity = Math.max(0, 1 - (age / 2000));
+          trail.scale = Math.max(0.1, 1 - (age / 2000) * 0.9);
+          return age < 2000;
+        });
+        
+        setTrailElements([...trailRef.current]);
+        animationFrameRef.current = requestAnimationFrame(animateTrails);
+      };
+      
+      animationFrameRef.current = requestAnimationFrame(animateTrails);
+    } else {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      setTrailElements([]);
+      trailRef.current = [];
+    }
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [trailEnabled]);
 
   useEffect(() => {
     // Wait for Chart.js to load
@@ -33,22 +120,23 @@ const MainDashboard = () => {
       // Create trail element only if trail is enabled
       if (trailEnabled) {
         const now = Date.now();
-        if (now - lastTrailTime.current > 30) { // Throttle to every 30ms for smoother trail
+        if (now - lastTrailTime.current > 30) { // Throttle to 30ms
           lastTrailTime.current = now;
-          
-          const trailId = now + Math.random();
           const newTrail = {
-            id: trailId,
-            x: e.clientX - 8,
-            y: e.clientY - 8
+            id: now + Math.random(),
+            x: e.clientX,
+            y: e.clientY,
+            timestamp: now,
+            opacity: 1,
+            scale: 1
           };
           
-          setTrailElements(prev => [...prev, newTrail]);
+          trailRef.current.push(newTrail);
           
-          // Remove trail element after animation completes
-          setTimeout(() => {
-            setTrailElements(prev => prev.filter(trail => trail.id !== trailId));
-          }, 2000);
+          // Limit trail elements to prevent memory issues
+          if (trailRef.current.length > 50) {
+            trailRef.current = trailRef.current.slice(-30);
+          }
         }
       }
     };
@@ -110,17 +198,18 @@ const MainDashboard = () => {
       });
     }
 
-    // Cash Flow Chart
+    // Cash Flow Chart - Working Capital Crisis
     if (cashFlowChartRef.current) {
       chartsRef.current.cashFlow = new window.Chart(cashFlowChartRef.current, {
         type: 'bar',
         data: {
-          labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+          labels: ['SMBs with <4 months cash', 'Revenue absorbed by ops', 'SMBs using gut-based ordering'],
           datasets: [{
-            label: 'Cash Flow ($M)',
-            data: [2.1, 1.8, 2.3, 1.9],
-            backgroundColor: '#f39c12',
-            borderRadius: 8
+            label: 'Percentage (%)',
+            data: [70, 90, 50],
+            backgroundColor: ['#e74c3c', '#c0392b', '#f39c12'],
+            borderRadius: 8,
+            borderSkipped: false
           }]
         },
         options: {
@@ -129,30 +218,75 @@ const MainDashboard = () => {
           plugins: {
             legend: {
               display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const value = context.parsed.y;
+                  const labels = ['70% of SMBs hold less than 4 months cash reserves', '90% of revenue absorbed by operating costs', '50%+ of SMBs use gut-based ordering'];
+                  return labels[context.dataIndex];
+                }
+              }
             }
           },
           scales: {
             y: {
-              beginAtZero: true
+              beginAtZero: true,
+              max: 100,
+              title: {
+                display: true,
+                text: 'Percentage (%)',
+                font: {
+                  size: 12,
+                  weight: 'bold'
+                }
+              },
+              grid: {
+                color: 'rgba(0, 0, 0, 0.1)'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Critical Cash Flow Issues',
+                font: {
+                  size: 12,
+                  weight: 'bold'
+                }
+              },
+              ticks: {
+                maxRotation: 0,
+                minRotation: 0,
+                font: {
+                  size: 10
+                }
+              }
             }
           }
         }
       });
     }
 
-    // Competitive Chart
+    // Competitive Chart - Market Share Impact
     if (competitiveChartRef.current) {
       chartsRef.current.competitive = new window.Chart(competitiveChartRef.current, {
         type: 'line',
         data: {
-          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+          labels: ['Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5'],
           datasets: [{
-            label: 'Market Share %',
-            data: [12, 15, 18, 16, 20, 22],
-            borderColor: '#9b59b6',
-            backgroundColor: 'rgba(155, 89, 182, 0.1)',
+            label: 'Reactive Planning',
+            data: [100, 95, 88, 80, 72],
+            borderColor: '#e74c3c',
+            backgroundColor: 'rgba(231, 76, 60, 0.1)',
             tension: 0.4,
-            fill: true
+            fill: false
+          }, {
+            label: 'Proactive Planning',
+            data: [100, 105, 112, 120, 130],
+            borderColor: '#27ae60',
+            backgroundColor: 'rgba(39, 174, 96, 0.1)',
+            tension: 0.4,
+            fill: false
           }]
         },
         options: {
@@ -160,12 +294,44 @@ const MainDashboard = () => {
           maintainAspectRatio: false,
           plugins: {
             legend: {
-              display: false
+              display: true,
+              position: 'top',
+              labels: {
+                padding: 20,
+                usePointStyle: true
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const datasetLabel = context.dataset.label;
+                  const value = context.parsed.y;
+                  return `${datasetLabel}: ${value}% market position`;
+                }
+              }
             }
           },
           scales: {
             y: {
-              beginAtZero: true
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Market Position (%)',
+                font: {
+                  size: 12,
+                  weight: 'bold'
+                }
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Time Period',
+                font: {
+                  size: 12,
+                  weight: 'bold'
+                }
+              }
             }
           }
         }
@@ -189,13 +355,92 @@ const MainDashboard = () => {
 
   const toggleTrail = () => {
     setTrailEnabled(!trailEnabled);
-    if (!trailEnabled) {
-      setTrailElements([]); // Clear existing trails when disabling
+    if (trailEnabled) {
+      // Clear existing trails when disabling
+      setTrailElements([]);
+      trailRef.current = [];
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    }
+  };
+
+  const toggleStatsControl = () => {
+    setShowStatsControl(!showStatsControl);
+  };
+
+  // Save stats to localStorage
+  const saveStatsToStorage = (statsConfig) => {
+    try {
+      localStorage.setItem('dashboardStatsConfig', JSON.stringify(statsConfig));
+    } catch (error) {
+      console.warn('Failed to save stats to localStorage:', error);
+    }
+  };
+
+  const toggleStat = (category, statKey) => {
+    const newStats = {
+      ...visibleStats,
+      [category]: {
+        ...visibleStats[category],
+        [statKey]: !visibleStats[category][statKey]
+      }
+    };
+    setVisibleStats(newStats);
+    saveStatsToStorage(newStats);
+  };
+
+  const resetAllStats = () => {
+    const resetStats = {
+      supply: {
+        globalLosses: true,
+        foodWaste: true,
+        produceWaste: true,
+        emergencyCosts: true,
+        inventoryAccuracy: true
+      },
+      cashFlow: {
+        cashReserves: true,
+        operatingCosts: true,
+        gutBasedOrdering: true,
+        latePayments: true,
+        surplusInventory: true
+      },
+      competitive: {
+        stockoutReduction: true,
+        reactivePlanning: true,
+        negativePerception: true,
+        badDebt: true
+      },
+      keyImpact: {
+        globalLosses: true,
+        cashReserves: true,
+        reactivePlanning: true,
+        foodWaste: true
+      }
+    };
+    setVisibleStats(resetStats);
+    saveStatsToStorage(resetStats);
+  };
+
+  const clearStatsStorage = () => {
+    try {
+      localStorage.removeItem('dashboardStatsConfig');
+      const defaultStats = loadStatsFromStorage();
+      setVisibleStats(defaultStats);
+    } catch (error) {
+      console.warn('Failed to clear stats from localStorage:', error);
     }
   };
 
   return (
     <div className="main-dashboard">
+      <button 
+        className={`stats-control-toggle ${showStatsControl ? 'active' : ''}`}
+        onClick={toggleStatsControl}
+      >
+        📊 Stats Control
+      </button>
       <button 
         className={`trail-toggle ${trailEnabled ? 'active' : ''}`}
         onClick={toggleTrail}
@@ -216,15 +461,17 @@ const MainDashboard = () => {
           key={trail.id}
           className="cursor-trail"
           style={{
-            left: trail.x,
-            top: trail.y,
+            left: trail.x - 6,
+            top: trail.y - 6,
+            opacity: trail.opacity,
+            transform: `scale(${trail.scale})`,
           }}
         />
       ))}
       <div className="container">
         <div className="header">
-          <h1>Grocery Supply Chain Analytics</h1>
-          <p>Comprehensive analysis of supply chain inefficiencies, cash flow constraints, and competitive disadvantages affecting grocery and produce suppliers in 2023-2025</p>
+          <h1>PredictLink - Supply Chain Intelligence</h1>
+          <p>AI-powered demand forecasting platform transforming reactive inventory management into predictive supply planning for grocery and produce suppliers</p>
         </div>
 
         <div className="stats-grid">
@@ -235,26 +482,36 @@ const MainDashboard = () => {
               <canvas ref={supplyChartRef}></canvas>
             </div>
             <ul className="stat-list">
-              <li>
-                <span className="stat-description">Global losses from stockouts & overstocks (2023)</span>
-                <span className="stat-value">$1.8T</span>
-              </li>
-              <li>
-                <span className="stat-description">U.S. food supply wasted annually</span>
-                <span className="stat-value">31%</span>
-              </li>
-              <li>
-                <span className="stat-description">Produce share of U.S. food waste</span>
-                <span className="stat-value">43.7%</span>
-              </li>
-              <li>
-                <span className="stat-description">Cost increase from emergency deliveries</span>
-                <span className="stat-value">30%</span>
-              </li>
-              <li>
-                <span className="stat-description">Brands with inventory accuracy &lt;80%</span>
-                <span className="stat-value">58%</span>
-              </li>
+              {visibleStats.supply.globalLosses && (
+                <li>
+                  <span className="stat-description">Global losses from stockouts & overstocks (2023)</span>
+                  <span className="stat-value">$1.8T</span>
+                </li>
+              )}
+              {visibleStats.supply.foodWaste && (
+                <li>
+                  <span className="stat-description">U.S. food supply wasted annually</span>
+                  <span className="stat-value">31%</span>
+                </li>
+              )}
+              {visibleStats.supply.produceWaste && (
+                <li>
+                  <span className="stat-description">Produce share of U.S. food waste</span>
+                  <span className="stat-value">43.7%</span>
+                </li>
+              )}
+              {visibleStats.supply.emergencyCosts && (
+                <li>
+                  <span className="stat-description">Cost increase from emergency deliveries</span>
+                  <span className="stat-value">30%</span>
+                </li>
+              )}
+              {visibleStats.supply.inventoryAccuracy && (
+                <li>
+                  <span className="stat-description">Brands with inventory accuracy &lt;80%</span>
+                  <span className="stat-value">58%</span>
+                </li>
+              )}
             </ul>
           </div>
 
@@ -265,26 +522,36 @@ const MainDashboard = () => {
               <canvas ref={cashFlowChartRef}></canvas>
             </div>
             <ul className="stat-list">
-              <li>
-                <span className="stat-description">SMBs with &lt;4 months cash reserves</span>
-                <span className="stat-value">70%</span>
-              </li>
-              <li>
-                <span className="stat-description">Revenue absorbed by operating costs</span>
-                <span className="stat-value">90%</span>
-              </li>
-              <li>
-                <span className="stat-description">SMBs using gut-based ordering</span>
-                <span className="stat-value">50%+</span>
-              </li>
-              <li>
-                <span className="stat-description">B2B invoices paid late (2024-2025)</span>
-                <span className="stat-value">50%</span>
-              </li>
-              <li>
-                <span className="stat-description">Surplus inventory value (2023)</span>
-                <span className="stat-value">$108B</span>
-              </li>
+              {visibleStats.cashFlow.cashReserves && (
+                <li>
+                  <span className="stat-description">SMBs with &lt;4 months cash reserves</span>
+                  <span className="stat-value">70%</span>
+                </li>
+              )}
+              {visibleStats.cashFlow.operatingCosts && (
+                <li>
+                  <span className="stat-description">Revenue absorbed by operating costs</span>
+                  <span className="stat-value">90%</span>
+                </li>
+              )}
+              {visibleStats.cashFlow.gutBasedOrdering && (
+                <li>
+                  <span className="stat-description">SMBs using gut-based ordering</span>
+                  <span className="stat-value">50%+</span>
+                </li>
+              )}
+              {visibleStats.cashFlow.latePayments && (
+                <li>
+                  <span className="stat-description">B2B invoices paid late (2024-2025)</span>
+                  <span className="stat-value">50%</span>
+                </li>
+              )}
+              {visibleStats.cashFlow.surplusInventory && (
+                <li>
+                  <span className="stat-description">Surplus inventory value (2023)</span>
+                  <span className="stat-value">$108B</span>
+                </li>
+              )}
             </ul>
           </div>
 
@@ -295,22 +562,30 @@ const MainDashboard = () => {
               <canvas ref={competitiveChartRef}></canvas>
             </div>
             <ul className="stat-list">
-              <li>
-                <span className="stat-description">Stockout reduction with automation</span>
-                <span className="stat-value">40%</span>
-              </li>
-              <li>
-                <span className="stat-description">Suppliers dependent on reactive planning</span>
-                <span className="stat-value">60%+</span>
-              </li>
-              <li>
-                <span className="stat-description">Consumers with negative stockout perception</span>
-                <span className="stat-value">65%</span>
-              </li>
-              <li>
-                <span className="stat-description">Bad debt affecting credit sales</span>
-                <span className="stat-value">8%</span>
-              </li>
+              {visibleStats.competitive.stockoutReduction && (
+                <li>
+                  <span className="stat-description">Stockout reduction with automation</span>
+                  <span className="stat-value">40%</span>
+                </li>
+              )}
+              {visibleStats.competitive.reactivePlanning && (
+                <li>
+                  <span className="stat-description">Suppliers dependent on reactive planning</span>
+                  <span className="stat-value">60%+</span>
+                </li>
+              )}
+              {visibleStats.competitive.negativePerception && (
+                <li>
+                  <span className="stat-description">Consumers with negative stockout perception</span>
+                  <span className="stat-value">65%</span>
+                </li>
+              )}
+              {visibleStats.competitive.badDebt && (
+                <li>
+                  <span className="stat-description">Bad debt affecting credit sales</span>
+                  <span className="stat-value">8%</span>
+                </li>
+              )}
             </ul>
           </div>
         </div>
@@ -318,22 +593,30 @@ const MainDashboard = () => {
         <div className="summary-section">
           <h2>Key Impact Summary</h2>
           <div className="key-insights">
-            <div className="insight-card">
-              <div className="insight-number">$1.8T</div>
-              <div className="insight-text">Global losses from supply inefficiencies</div>
-            </div>
-            <div className="insight-card">
-              <div className="insight-number">70%</div>
-              <div className="insight-text">SMBs with insufficient cash reserves</div>
-            </div>
-            <div className="insight-card">
-              <div className="insight-number">60%+</div>
-              <div className="insight-text">Suppliers using reactive planning</div>
-            </div>
-            <div className="insight-card">
-              <div className="insight-number">31%</div>
-              <div className="insight-text">U.S. food supply wasted annually</div>
-            </div>
+            {visibleStats.keyImpact.globalLosses && (
+              <div className="insight-card">
+                <div className="insight-number">$1.8T</div>
+                <div className="insight-text">Global losses from supply inefficiencies</div>
+              </div>
+            )}
+            {visibleStats.keyImpact.cashReserves && (
+              <div className="insight-card">
+                <div className="insight-number">70%</div>
+                <div className="insight-text">SMBs with insufficient cash reserves</div>
+              </div>
+            )}
+            {visibleStats.keyImpact.reactivePlanning && (
+              <div className="insight-card">
+                <div className="insight-number">60%+</div>
+                <div className="insight-text">Suppliers using reactive planning</div>
+              </div>
+            )}
+            {visibleStats.keyImpact.foodWaste && (
+              <div className="insight-card">
+                <div className="insight-number">31%</div>
+                <div className="insight-text">U.S. food supply wasted annually</div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -348,6 +631,199 @@ const MainDashboard = () => {
         <Settings size={20} />
         How It Works
       </Link>
+
+      {/* Stats Control Panel */}
+      {showStatsControl && (
+        <div className="stats-control-panel">
+          <div className="stats-control-header">
+            <h3>📊 Customize Statistics Display</h3>
+            <button className="close-stats-control" onClick={toggleStatsControl}>×</button>
+          </div>
+          
+          <div className="stats-categories">
+            {/* Supply Inefficiencies */}
+            <div className="stats-category">
+              <h4>Supply Inefficiencies</h4>
+              <div className="stats-checkboxes">
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={visibleStats.supply.globalLosses}
+                    onChange={() => toggleStat('supply', 'globalLosses')}
+                  />
+                  Global losses ($1.8T)
+                </label>
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={visibleStats.supply.foodWaste}
+                    onChange={() => toggleStat('supply', 'foodWaste')}
+                  />
+                  U.S. food waste (31%)
+                </label>
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={visibleStats.supply.produceWaste}
+                    onChange={() => toggleStat('supply', 'produceWaste')}
+                  />
+                  Produce waste (43.7%)
+                </label>
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={visibleStats.supply.emergencyCosts}
+                    onChange={() => toggleStat('supply', 'emergencyCosts')}
+                  />
+                  Emergency costs (30%)
+                </label>
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={visibleStats.supply.inventoryAccuracy}
+                    onChange={() => toggleStat('supply', 'inventoryAccuracy')}
+                  />
+                  Inventory accuracy (58%)
+                </label>
+              </div>
+            </div>
+
+            {/* Cash Flow Constraints */}
+            <div className="stats-category">
+              <h4>Cash Flow Constraints</h4>
+              <div className="stats-checkboxes">
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={visibleStats.cashFlow.cashReserves}
+                    onChange={() => toggleStat('cashFlow', 'cashReserves')}
+                  />
+                  Cash reserves &lt;4 months (70%)
+                </label>
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={visibleStats.cashFlow.operatingCosts}
+                    onChange={() => toggleStat('cashFlow', 'operatingCosts')}
+                  />
+                  Operating costs (90%)
+                </label>
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={visibleStats.cashFlow.gutBasedOrdering}
+                    onChange={() => toggleStat('cashFlow', 'gutBasedOrdering')}
+                  />
+                  Gut-based ordering (50%+)
+                </label>
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={visibleStats.cashFlow.latePayments}
+                    onChange={() => toggleStat('cashFlow', 'latePayments')}
+                  />
+                  Late payments (50%)
+                </label>
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={visibleStats.cashFlow.surplusInventory}
+                    onChange={() => toggleStat('cashFlow', 'surplusInventory')}
+                  />
+                  Surplus inventory ($108B)
+                </label>
+              </div>
+            </div>
+
+            {/* Competitive Disadvantage */}
+            <div className="stats-category">
+              <h4>Competitive Disadvantage</h4>
+              <div className="stats-checkboxes">
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={visibleStats.competitive.stockoutReduction}
+                    onChange={() => toggleStat('competitive', 'stockoutReduction')}
+                  />
+                  Stockout reduction (40%)
+                </label>
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={visibleStats.competitive.reactivePlanning}
+                    onChange={() => toggleStat('competitive', 'reactivePlanning')}
+                  />
+                  Reactive planning (60%+)
+                </label>
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={visibleStats.competitive.negativePerception}
+                    onChange={() => toggleStat('competitive', 'negativePerception')}
+                  />
+                  Negative perception (65%)
+                </label>
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={visibleStats.competitive.badDebt}
+                    onChange={() => toggleStat('competitive', 'badDebt')}
+                  />
+                  Bad debt (8%)
+                </label>
+              </div>
+            </div>
+
+            {/* Key Impact Summary */}
+            <div className="stats-category">
+              <h4>Key Impact Summary</h4>
+              <div className="stats-checkboxes">
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={visibleStats.keyImpact.globalLosses}
+                    onChange={() => toggleStat('keyImpact', 'globalLosses')}
+                  />
+                  Global losses ($1.8T)
+                </label>
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={visibleStats.keyImpact.cashReserves}
+                    onChange={() => toggleStat('keyImpact', 'cashReserves')}
+                  />
+                  Cash reserves (70%)
+                </label>
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={visibleStats.keyImpact.reactivePlanning}
+                    onChange={() => toggleStat('keyImpact', 'reactivePlanning')}
+                  />
+                  Reactive planning (60%+)
+                </label>
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={visibleStats.keyImpact.foodWaste}
+                    onChange={() => toggleStat('keyImpact', 'foodWaste')}
+                  />
+                  Food waste (31%)
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div className="stats-control-actions">
+            <button className="reset-stats-btn" onClick={resetAllStats}>
+              Reset All
+            </button>
+            <button className="clear-storage-btn" onClick={clearStatsStorage}>
+              Clear Storage
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Sources Modal */}
       <div id="sourcesModal" className="modal">

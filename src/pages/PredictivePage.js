@@ -235,14 +235,14 @@ const PredictivePage = () => {
             <ArrowLeft size={16} />
             Back to Dashboard
           </Link>
-          <h1>Predictive Supply Chain Intelligence</h1>
-          <p>Transform your reactive inventory management into predictive supply planning through our AI-powered demand forecasting platform</p>
+          <h1>PredictLink - AI-Powered Supply Chain Intelligence</h1>
+          <p>Transform your reactive inventory management into predictive supply planning through PredictLink's AI-powered demand forecasting platform</p>
         </div>
 
         <div className="content">
           {/* How It Works Section */}
           <div className="section">
-            <h2>How Our AI-Powered Solution Works</h2>
+            <h2>How PredictLink's AI-Powered Solution Works</h2>
             <div className="process-flow">
               <div className="process-step step-1">
                 <div className="step-icon">
@@ -250,7 +250,7 @@ const PredictivePage = () => {
                 </div>
                 <div className="step-title">Data Collection & Analysis</div>
                 <div className="step-description">
-                  We analyze your historical sales data, customer ordering patterns, seasonal trends, and market indicators to build comprehensive demand profiles for each product category.
+                  PredictLink analyzes your historical sales data, customer ordering patterns, seasonal trends, and market indicators to build comprehensive demand profiles for each product category.
                 </div>
               </div>
 
@@ -260,7 +260,7 @@ const PredictivePage = () => {
                 </div>
                 <div className="step-title">AI Prediction Engine</div>
                 <div className="step-description">
-                  Our machine learning algorithms process multiple data streams to predict exactly what your local clients will order, when they'll order it, and in what quantities.
+                  PredictLink's machine learning algorithms process multiple data streams to predict exactly what your local clients will order, when they'll order it, and in what quantities.
                 </div>
               </div>
 
@@ -390,7 +390,7 @@ const PredictivePage = () => {
             <h2>See It In Action - Live Client Dashboard</h2>
             <div style={{textAlign: 'center', margin: '30px 0'}}>
               <p style={{fontSize: '1.2rem', color: '#7f8c8d', marginBottom: '30px'}}>
-                Experience how Singh Union Enterprises uses our platform to manage 10 local clients and 20 products with AI-powered predictions.
+                Experience how Singh Union Enterprises uses PredictLink to manage 10 local clients and 20 products with AI-powered predictions.
               </p>
               <Link to="/client-dashboard" className="cta-button" style={{background: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)', color: 'white', border: 'none', padding: '15px 30px', borderRadius: '50px', fontSize: '1.1rem', fontWeight: '600', cursor: 'pointer', transition: 'all 0.3s ease', boxShadow: '0 10px 25px rgba(231, 76, 60, 0.4)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '10px'}}>
                 <Eye size={20} />
@@ -401,9 +401,9 @@ const PredictivePage = () => {
 
           {/* Call to Action */}
           <div className="cta-section">
-            <div className="cta-title">Ready to Transform Your Supply Chain?</div>
+            <div className="cta-title">Ready to Transform Your Supply Chain with PredictLink?</div>
             <div className="cta-description">
-              Join the first Vendors in your industry with predictive supply intelligence. Start your risk-free evaluation today.
+              Join the first vendors in your industry with PredictLink's predictive supply intelligence. Start your risk-free evaluation today.
             </div>
             <button className="cta-button" onClick={() => alert('Contact us to start your POC evaluation!')}>
               Start Your POC Evaluation
