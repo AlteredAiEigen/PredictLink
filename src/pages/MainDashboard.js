@@ -528,6 +528,12 @@ const MainDashboard = () => {
                   <span className="stat-value">70%</span>
                 </li>
               )}
+              {visibleStats.cashFlow.latePayments && (
+                <li>
+                  <span className="stat-description">B2B invoices paid late (2024-2025)</span>
+                  <span className="stat-value">50%</span>
+                </li>
+              )}
               {visibleStats.cashFlow.operatingCosts && (
                 <li>
                   <span className="stat-description">Revenue absorbed by operating costs</span>
@@ -540,12 +546,7 @@ const MainDashboard = () => {
                   <span className="stat-value">50%+</span>
                 </li>
               )}
-              {visibleStats.cashFlow.latePayments && (
-                <li>
-                  <span className="stat-description">B2B invoices paid late (2024-2025)</span>
-                  <span className="stat-value">50%</span>
-                </li>
-              )}
+              
               {visibleStats.cashFlow.surplusInventory && (
                 <li>
                   <span className="stat-description">Surplus inventory value (2023)</span>
